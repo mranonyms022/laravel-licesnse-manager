@@ -3,74 +3,63 @@
 namespace App\Services;
 
 use App\Models\License;
+use App\Models\LicenseKeypair;
 
 class TokenGeneratorService
 {
-    /**
-     * Generate an Ed25519-signed JWT token for a license.
-     *
-     * This is the ONLY place tokens are created.
-     * Private key never leaves this server.
-     */
     public function generate(License $license): string
     {
-        $privateKeyB64 = config('license.private_key');
-        if (! $privateKeyB64) {
-            throw new \RuntimeException('LICENSE_PRIVATE_KEY not configured on server.');
+        // ── Active keypair DB se lo ───────────────────────────────────
+        $keypair = LicenseKeypair::active();
+
+        if (! $keypair) {
+            throw new \RuntimeException(
+                'No active keypair found. Run: php artisan license:keygen'
+            );
         }
 
-        $privateKey = base64_decode($privateKeyB64);
+        // ── Decrypt karo ──────────────────────────────────────────────
+        $privateKey = $keypair->getPrivateKeyDecrypted();
+        $fprSecret  = $keypair->getFingerprintSecretDecrypted();
 
+        // ── Payload ───────────────────────────────────────────────────
         $payload = [
-            'iat'  => time(),
-            'nbf'  => time(),
-            'exp'  => $license->expires_at->timestamp,
-
-            // License data embedded in token
-            'lic'  => $license->license_key,
-            'dom'  => $license->domain,
-            'grc'  => $license->grace_period_days,
-            'prd'  => $license->product_name,
-            'cli'  => $license->client_name,
-            'ftr'  => $license->features ?? [],
-
-            // Secret fingerprint — can ONLY be generated with server's fingerprint secret
-            // Client can verify it, but CANNOT reproduce it
-            'fpr'  => $this->generateFingerprint(
-                $license->domain,
-                $license->license_key,
-                $license->expires_at->format('Y-m-d')
-            ),
-
-            // Unique token ID (for revocation tracking)
-            'jti'  => bin2hex(random_bytes(16)),
+            'iat' => time(),
+            'exp' => $license->expires_at->timestamp,
+            'lic' => $license->license_key,
+            'dom' => $license->domain,
+            'grc' => $license->grace_period_days,
+            'prd' => $license->product_name,
+            'cli' => $license->client_name,
+            'ftr' => $license->features ?? [],
+            'fpr' => $this->fingerprint($license, $fprSecret),
+            'jti' => bin2hex(random_bytes(16)),
+            'kvr' => $keypair->version,  // ← ab available hai
         ];
 
-        return $this->buildSignedToken($payload, $privateKey);
+        return $this->sign($payload, base64_decode($privateKey));
     }
 
-    private function generateFingerprint(string $domain, string $key, string $expires): string
+    private function fingerprint(License $license, string $secret): string
     {
-        $secret = config('license.fingerprint_secret');
-        if (! $secret) {
-            throw new \RuntimeException('LICENSE_FINGERPRINT_SECRET not configured.');
-        }
-
-        return hash_hmac('sha256', $domain . '|' . $key . '|' . $expires, $secret);
+        return hash_hmac(
+            'sha256',
+            $license->domain . '|' . $license->license_key . '|' . $license->expires_at->format('Y-m-d'),
+            $secret
+        );
     }
 
-    private function buildSignedToken(array $payload, string $privateKey): string
+    private function sign(array $payload, string $privateKey): string
     {
-        $header  = $this->base64urlEncode(json_encode(['alg' => 'EdDSA', 'typ' => 'LIC']));
-        $body    = $this->base64urlEncode(json_encode($payload));
+        $header  = $this->b64u(json_encode(['alg' => 'EdDSA', 'typ' => 'LIC']));
+        $body    = $this->b64u(json_encode($payload));
         $message = $header . '.' . $body;
+        $sig     = sodium_crypto_sign_detached($message, $privateKey);
 
-        $signature = sodium_crypto_sign_detached($message, $privateKey);
-
-        return $message . '.' . $this->base64urlEncode($signature);
+        return $message . '.' . $this->b64u($sig);
     }
 
-    private function base64urlEncode(string $data): string
+    private function b64u(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
