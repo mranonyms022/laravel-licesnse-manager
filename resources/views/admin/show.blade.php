@@ -1,152 +1,198 @@
 @extends('admin.layout')
-@section('title', $license->client_name . ' — ' . $license->license_key)
+@section('title', $license->client_name)
 
 @section('content')
 
-<div class="flex items-center gap-3 mb-4" style="margin-bottom: 1.5rem;">
-    <a href="{{ route('licenses.index') }}" class="btn btn-ghost btn-sm">← Back</a>
-    <a href="{{ route('licenses.edit', $license) }}" class="btn btn-ghost btn-sm">Edit</a>
+<div class="page-header">
+    <div>
+        <div class="page-title">{{ $license->client_name }}</div>
+        <div class="page-sub mono">{{ $license->license_key }}</div>
+    </div>
+    <div class="flex gap-2">
+        <a href="{{ route('licenses.index') }}" class="btn btn-ghost btn-sm">← Back</a>
+        <a href="{{ route('licenses.edit', $license) }}" class="btn btn-ghost btn-sm">Edit</a>
+    </div>
 </div>
 
-<div class="grid-2">
-    {{-- Left: Details --}}
-    <div>
-        <div class="card">
-            <div class="card-title">License Details</div>
+@php
+    $status  = $license->isExpired() && ! in_array($license->status, ['revoked','suspended']) ? 'expired' : $license->status;
+    $days    = $license->daysUntilExpiry();
+@endphp
 
-            <div style="display: grid; gap: 1rem;">
-                <div>
-                    <div class="text-xs text-muted">License Key</div>
-                    <div class="mono" style="font-size: 1rem; color: var(--accent); margin-top: .2rem; letter-spacing: .06em;">{{ $license->license_key }}</div>
-                </div>
-                <div>
-                    <div class="text-xs text-muted">Status</div>
-                    @php $s = $license->isExpired() ? 'expired' : $license->status; @endphp
-                    <div style="margin-top:.25rem;"><span class="badge badge-{{ $s }}">{{ ucfirst($s) }}</span></div>
-                </div>
-                <div>
-                    <div class="text-xs text-muted">Client</div>
-                    <div style="font-weight:500; margin-top:.2rem;">{{ $license->client_name }}</div>
-                    <div class="text-xs text-muted">{{ $license->client_email }}</div>
-                </div>
-                <div>
-                    <div class="text-xs text-muted">Domain (Bound)</div>
-                    <div class="mono text-sm" style="margin-top:.2rem;">{{ $license->domain }}</div>
-                </div>
-                <div>
-                    <div class="text-xs text-muted">Product</div>
-                    <div style="margin-top:.2rem;">{{ $license->product_name }}</div>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <div class="text-xs text-muted">Expires</div>
-                        <div class="text-sm {{ $license->isExpired() ? 'text-red' : ($license->daysUntilExpiry() <= 7 ? 'text-yellow' : 'text-green') }}" style="margin-top:.2rem;">
+<div class="grid-2">
+
+    {{-- LEFT COLUMN --}}
+    <div>
+
+        {{-- License Info --}}
+        <div class="card">
+            <div class="card-head">License Details</div>
+            <table class="detail-table">
+                <tr>
+                    <td>License Key</td>
+                    <td><span class="mono" style="color:var(--accent); letter-spacing:.05em;">{{ $license->license_key }}</span></td>
+                </tr>
+                <tr>
+                    <td>Status</td>
+                    <td><span class="badge badge-{{ $status }}">{{ ucfirst($status) }}</span></td>
+                </tr>
+                <tr>
+                    <td>Client</td>
+                    <td>
+                        <div class="fw-600">{{ $license->client_name }}</div>
+                        <div class="text-xs text-muted">{{ $license->client_email }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Bound Domain</td>
+                    <td><span class="mono">{{ $license->domain }}</span></td>
+                </tr>
+                <tr>
+                    <td>Product</td>
+                    <td>{{ $license->product_name }}</td>
+                </tr>
+                <tr>
+                    <td>Expires</td>
+                    <td>
+                        <span class="{{ $license->isExpired() ? 'text-red' : ($days <= 7 ? 'text-yellow' : 'text-green') }} fw-600">
                             {{ $license->expires_at->format('d M Y') }}
-                        </div>
+                        </span>
                         @if(! $license->isExpired())
-                            <div class="text-xs text-muted">{{ $license->daysUntilExpiry() }} days remaining</div>
+                            <span class="text-xs text-muted"> — {{ $days }} days left</span>
                         @endif
-                    </div>
-                    <div>
-                        <div class="text-xs text-muted">Grace Period</div>
-                        <div class="text-sm" style="margin-top:.2rem;">{{ $license->grace_period_days }} days</div>
-                    </div>
-                </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Grace Period</td>
+                    <td>{{ $license->grace_period_days }} days</td>
+                </tr>
+                <tr>
+                    <td>Activated</td>
+                    <td class="text-sm">{{ $license->activated_at?->format('d M Y, H:i') ?? '—' }}</td>
+                </tr>
                 @if($license->features)
-                <div>
-                    <div class="text-xs text-muted">Features</div>
-                    <div class="token-box" style="margin-top:.3rem; font-size:.75rem;">{{ json_encode($license->features, JSON_PRETTY_PRINT) }}</div>
-                </div>
+                <tr>
+                    <td>Features</td>
+                    <td><span class="mono text-xs" style="color:var(--text);">{{ json_encode($license->features) }}</span></td>
+                </tr>
                 @endif
                 @if($license->notes)
-                <div>
-                    <div class="text-xs text-muted">Notes</div>
-                    <div class="text-sm" style="margin-top:.2rem;">{{ $license->notes }}</div>
-                </div>
+                <tr>
+                    <td>Notes</td>
+                    <td class="text-sm">{{ $license->notes }}</td>
+                </tr>
                 @endif
-            </div>
+            </table>
         </div>
 
-        {{-- Actions --}}
+        {{-- Actions Card --}}
         <div class="card">
-            <div class="card-title">Actions</div>
-            <div class="flex gap-2 flex-wrap">
+            <div class="card-head">Actions</div>
+
+            <div class="flex gap-2 flex-wrap mb-4">
+
                 {{-- Generate Token --}}
                 <form method="POST" action="{{ route('licenses.token', $license) }}">
                     @csrf
                     <button class="btn btn-primary btn-sm">⚡ Generate Token</button>
                 </form>
 
-                {{-- Renew --}}
-                <button class="btn btn-success btn-sm" onclick="document.getElementById('renew-form').style.display='block'">↻ Renew</button>
-
                 {{-- Activate --}}
                 @if($license->status !== 'active')
                 <form method="POST" action="{{ route('licenses.activate', $license) }}">
                     @csrf
-                    <button class="btn btn-ghost btn-sm">✓ Activate</button>
+                    <button class="btn btn-success btn-sm">✓ Activate</button>
                 </form>
                 @endif
 
                 {{-- Suspend --}}
                 @if($license->status === 'active')
-                <form method="POST" action="{{ route('licenses.suspend', $license) }}">
+                <form method="POST" action="{{ route('licenses.suspend', $license) }}"
+                      onsubmit="return confirm('Suspend this license? Client app will show unavailable page.')">
                     @csrf
-                    <button class="btn btn-warning btn-sm" onclick="return confirm('Suspend this license?')">⏸ Suspend</button>
+                    <button class="btn btn-warning btn-sm">⏸ Suspend</button>
                 </form>
                 @endif
 
                 {{-- Revoke --}}
                 @if($license->status !== 'revoked')
-                <form method="POST" action="{{ route('licenses.revoke', $license) }}">
+                <form method="POST" action="{{ route('licenses.revoke', $license) }}"
+                      onsubmit="return confirm('Revoke this license permanently? This cannot be undone.')">
                     @csrf
-                    <button class="btn btn-danger btn-sm" onclick="return confirm('Revoke this license? This cannot be undone.')">✗ Revoke</button>
+                    <button class="btn btn-danger btn-sm">✗ Revoke</button>
                 </form>
                 @endif
+
+                {{-- Delete --}}
+                <form method="POST" action="{{ route('licenses.destroy', $license) }}"
+                      onsubmit="return confirm('DELETE this license completely from database? This cannot be undone.')">
+                    @csrf
+                    @method('DELETE')
+                    <button class="btn btn-sm" style="background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2); color:#f87171;">
+                        🗑 Delete
+                    </button>
+                </form>
+
             </div>
 
-            {{-- Renew form (hidden) --}}
-            <div id="renew-form" style="display:none; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
+            {{-- Renew Section --}}
+            <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
+                <div class="text-xs text-muted mb-3">Renew License</div>
                 <form method="POST" action="{{ route('licenses.renew', $license) }}">
                     @csrf
-                    <div class="form-inline">
-                        <div class="form-group">
-                            <label>New Expiry Date</label>
-                            <input type="date" name="expires_at" min="{{ now()->addDay()->format('Y-m-d') }}"
+                    <div class="flex gap-2 items-center flex-wrap">
+                        <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+                            <input type="date" name="expires_at"
+                                   min="{{ now()->addDay()->format('Y-m-d') }}"
                                    value="{{ now()->addYear()->format('Y-m-d') }}">
                         </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-success">Renew & Generate Token</button>
-                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">↻ Renew & Generate Token</button>
                     </div>
                 </form>
             </div>
         </div>
+
     </div>
 
-    {{-- Right: Events --}}
+    {{-- RIGHT COLUMN --}}
     <div>
-        <div class="card">
-            <div class="card-title">Event History</div>
+
+        {{-- Event History --}}
+        <div class="card" style="max-height: 600px; overflow-y: auto;">
+            <div class="card-head">Event History</div>
+
             @forelse($events as $event)
-            <div style="display:flex; align-items:flex-start; gap:.75rem; padding: .75rem 0; border-bottom: 1px solid var(--border);">
-                <div style="width: 8px; height: 8px; border-radius:50%; background: var(--accent); margin-top: .35rem; flex-shrink:0;"></div>
-                <div>
-                    <div class="text-sm" style="font-weight:500;">{{ str_replace('_', ' ', ucfirst($event->event_type)) }}</div>
+            <div class="event-item">
+                <div class="event-dot" style="background:
+                    {{ match($event->event_type) {
+                        'revoked'   => 'var(--red)',
+                        'suspended' => 'var(--yellow)',
+                        'renewed'   => 'var(--green)',
+                        'issued'    => 'var(--accent)',
+                        default     => 'var(--muted)'
+                    } }};"></div>
+                <div style="flex:1; min-width:0;">
+                    <div class="text-sm fw-600">
+                        {{ ucwords(str_replace('_', ' ', $event->event_type)) }}
+                    </div>
                     <div class="text-xs text-muted">{{ $event->created_at->format('d M Y, H:i:s') }}</div>
                     @if($event->ip_address)
-                        <div class="text-xs text-muted mono">{{ $event->ip_address }}</div>
+                        <div class="text-xs mono" style="margin-top:.2rem;">{{ $event->ip_address }}</div>
                     @endif
                     @if($event->payload)
-                        <div class="token-box" style="margin-top:.4rem; font-size:.7rem;">{{ json_encode($event->payload) }}</div>
+                        <div style="margin-top:.4rem; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:.5rem .75rem; font-family:var(--mono); font-size:.68rem; color:var(--muted);">
+                            {{ json_encode($event->payload) }}
+                        </div>
                     @endif
                 </div>
             </div>
             @empty
-            <div class="text-sm text-muted" style="text-align:center; padding: 1.5rem 0;">No events yet.</div>
+            <div class="empty-state" style="padding:1.5rem;">
+                <div class="empty-state-sub">No events yet.</div>
+            </div>
             @endforelse
         </div>
+
     </div>
 </div>
 

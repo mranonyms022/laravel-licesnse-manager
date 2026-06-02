@@ -1,101 +1,177 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="300" alt="Laravel Logo">
 </p>
 
-## About Laravel
+<p align="center">
+  <strong>License Manager — Admin Panel</strong><br>
+  Centralized license management for all your deployed Laravel applications
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-11-FF2D20?style=flat&logo=laravel" alt="Laravel 11">
+  <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=flat&logo=php" alt="PHP 8.3">
+  <img src="https://img.shields.io/badge/Encryption-Ed25519-green?style=flat" alt="Ed25519">
+  <img src="https://img.shields.io/badge/License-Proprietary-red?style=flat" alt="Proprietary">
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## What is This?
 
-## Learning Laravel
+This is the **server-side admin panel** for managing software licenses.
+From here you issue, renew, revoke, and track licenses for all your client deployments.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Clients install the companion package → [laravel-license](https://github.com/mranonyms022/laravel-license)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## How It Works
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+Admin Panel (this repo)
+      │
+      ├── Generate Ed25519 keypair (once)
+      │
+      ├── Create license → Issue signed token
+      │         │
+      │         └── Send token to client
+      │                   │
+      │                   └── Client pastes in .env
+      │                             │
+      │                             └── Verified OFFLINE
+      │                                 No API calls
+      │                                 No network needed
+      │
+      └── Renew / Revoke / Suspend anytime
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-
-# License Manager — Admin Panel
-
-A centralized license management system built with Laravel 11.
-Issue, renew, revoke, and manage licenses for all your deployed
-applications from a single dashboard.
+---
 
 ## Features
 
-- **Token Generation** — Ed25519 cryptographically signed offline tokens
-- **License Management** — Create, renew, suspend, revoke licenses
-- **Domain Binding** — Each license locked to a specific domain
-- **Grace Period** — Configurable buffer after expiry
-- **Versioned Keypairs** — Multiple keypairs, old tokens never break
-- **Event History** — Full audit log of every license action
-- **CLI Support** — Issue licenses via artisan commands
+- **Offline Token Generation** — Ed25519 signed JWT tokens, verified without any API call
+- **License Management** — Create, renew, suspend, revoke from dashboard
+- **Domain Binding** — Every license locked to a specific domain
+- **Grace Period** — Configurable buffer days after expiry
+- **Versioned Keypairs** — Rotate keys anytime, old tokens never break
+- **Event History** — Full audit log of every action per license
+- **CLI Support** — Issue and manage licenses via artisan commands
+
+---
 
 ## Tech Stack
 
-Laravel 11 · MySQL · PHP 8.3 · Ed25519 (libsodium)
+|            |                                               |
+| ---------- | --------------------------------------------- |
+| Framework  | Laravel 11                                    |
+| Language   | PHP 8.3                                       |
+| Database   | MySQL                                         |
+| Encryption | Ed25519 (libsodium) + AES-256 (Laravel Crypt) |
+
+---
 
 ## Quick Start
 
 ```bash
 git clone git@github.com:mranonyms022/laravel-license-manager.git
-cd license-manager
+cd laravel-license-manager
+
 composer install
 cp .env.example .env
+
+# Database config karo .env mein
 php artisan key:generate
 php artisan migrate
+
+# Keys generate karo (sirf ek baar)
 php artisan license:keygen
 ```
 
+---
+
 ## Artisan Commands
 
-| Command                              | Description                  |
-| ------------------------------------ | ---------------------------- |
-| `license:keygen`                     | Generate new Ed25519 keypair |
-| `license:keys`                       | List all keypairs            |
-| `license:key-activate v2`            | Switch active keypair        |
-| `license:issue --domain= --expires=` | Issue token from CLI         |
+| Command                                                             | Description                   |
+| ------------------------------------------------------------------- | ----------------------------- |
+| `php artisan license:keygen`                                        | Generate new Ed25519 keypair  |
+| `php artisan license:keys`                                          | List all keypairs with status |
+| `php artisan license:key-activate v2`                               | Switch active keypair         |
+| `php artisan license:issue --domain= --expires= --client= --email=` | Issue token from CLI          |
 
-## How It Works
+---
+
+## Keypair Management
+
+```bash
+# Pehli baar
+php artisan license:keygen
+
+# 6 mahine baad naya key chahiye
+php artisan license:keygen
+# Old keys preserved — purane tokens valid rahenge
+
+# Sab keys dekhna
+php artisan license:keys
+
+# Output:
+# +---------+----------+-----------------------------+------------------+
+# | Version | Status   | Public Key                  | Created          |
+# +---------+----------+-----------------------------+------------------+
+# | v1      | inactive | kfmLLR6CsRzMjDFEKImk9i...  | 2024-01-01 10:00 |
+# | v2      | ACTIVE   | xK9mP2QrHjLwYbTnSfUoVc...  | 2026-01-01 09:00 |
+# +---------+----------+-----------------------------+------------------+
+```
+
+---
+
+## Issue a License
+
+**Via Admin Panel:**
+
+1. Dashboard → New License
+2. Fill domain, expiry, client details
+3. Token auto-generated → copy & send to client
+
+**Via CLI:**
+
+```bash
+php artisan license:issue \
+  --domain=app.client.com \
+  --expires=2026-12-31 \
+  --client="Client Name" \
+  --email=client@email.com \
+  --grace=3
+```
+
+---
+
+## Renewal Process
+
+```
+1. Dashboard → Find license → Renew
+2. Set new expiry → Generate Token
+3. Copy token → Send to client
+4. Client pastes in .env
+5. Done — no deployment needed
+```
+
+---
+
+## Security
+
+| What               | How                                            |
+| ------------------ | ---------------------------------------------- |
+| Private keys       | Encrypted in DB via Laravel Crypt (AES-256)    |
+| Token signing      | Ed25519 — cannot be forged without private key |
+| Token verification | Offline — no network call on client            |
+| Domain binding     | Token invalid on any other domain              |
+| Key rotation       | Old keypairs preserved — zero downtime         |
+
+> **Important:** Keep `APP_KEY` and database backup separate.
+> Both together can decrypt stored private keys.
+
+---
+
+## Related
+
+- **Client Package** → [mranonyms022/laravel-license](https://github.com/mranonyms022/laravel-license)
