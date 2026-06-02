@@ -56,3 +56,46 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+# License Manager — Admin Panel
+
+A centralized license management system built with Laravel 11.
+Issue, renew, revoke, and manage licenses for all your deployed
+applications from a single dashboard.
+
+## Features
+
+- **Token Generation** — Ed25519 cryptographically signed offline tokens
+- **License Management** — Create, renew, suspend, revoke licenses
+- **Domain Binding** — Each license locked to a specific domain
+- **Grace Period** — Configurable buffer after expiry
+- **Versioned Keypairs** — Multiple keypairs, old tokens never break
+- **Event History** — Full audit log of every license action
+- **CLI Support** — Issue licenses via artisan commands
+
+## Tech Stack
+
+Laravel 11 · MySQL · PHP 8.3 · Ed25519 (libsodium)
+
+## Quick Start
+
+```bash
+git clone git@github.com:mranonyms022/laravel-license-manager.git
+cd license-manager
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan license:keygen
+```
+
+## Artisan Commands
+
+| Command                              | Description                  |
+| ------------------------------------ | ---------------------------- |
+| `license:keygen`                     | Generate new Ed25519 keypair |
+| `license:keys`                       | List all keypairs            |
+| `license:key-activate v2`            | Switch active keypair        |
+| `license:issue --domain= --expires=` | Issue token from CLI         |
+
+## How It Works
